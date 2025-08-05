@@ -1,0 +1,157 @@
+using Assignment1_SOLID;
+using Microsoft.SqlServer.Server;
+using System;
+
+namespace Assignment1_SOLID
+{
+    // Interface for reporting structure (ISP)
+    public interface IReport
+    {
+        string Title { get; }
+        string Content { get; }
+    }
+
+    // Specific report types
+    public class Report : IReport
+    {
+        public string Title { get; set; }
+        public string Content { get; set; }
+
+        public Report(string title, string content)
+        {
+            Title = title;
+            Content = content;
+        }
+    }
+
+    public class FinancialReport : Report
+    {
+        public string Currency { get; set; }
+
+        public FinancialReport(string title, string content, string currency)
+            : base(title, content)
+        {
+            Currency = currency;
+        }
+    }
+
+    // Interface for Report Generation (SRP)
+    public interface IReportGenerator
+    {
+        IReport GenerateReport(string title, string content);
+    }
+
+    public class ReportGenerator : IReportGenerator
+    {
+        public IReport GenerateReport(string title, string content)
+        {
+            return new Report(title, content);
+        }
+    }
+
+    // Formatter Interface (OCP)
+    public interface IReportFormatter
+    {
+        string Format(IReport report);
+    }
+
+    public class PDFFormatter : IReportFormatter
+    {
+        public string Format(IReport report)
+        {
+            return $"[PDF FORMAT]\nTitle: {report.Title}\nContent: {report.Content}";
+        }
+    }
+
+    public class ExcelFormatter : IReportFormatter
+    {
+        public string Format(IReport report)
+        {
+            return $"[EXCEL FORMAT]\nTitle: {report.Title}\nContent: {report.Content}";
+        }
+    }
+
+    // Saver interface encapsulating save behavior (SRP)
+    public interface IReportSaver
+    {
+        void Save(string content);
+    }
+
+    public class FileSaver : IReportSaver
+    {
+        public void Save(string content)
+        {
+            // Simulate saving (like writing to file/storage)
+            Console.WriteLine("Saving...");
+            Console.WriteLine(content);
+        }
+    }
+
+    // ReportService class - applies DIP (depends on abstractions)
+    public class ReportService
+    {
+        private readonly IReportGenerator _generator;
+        private readonly IReportFormatter _formatter;
+        private readonly IReportSaver _saver;
+
+        public ReportService(IReportGenerator generator,
+                             IReportFormatter formatter,
+                             IReportSaver saver)
+        {
+            _generator = generator;
+            _formatter = formatter;
+            _saver = saver;
+        }
+
+        public void CreateAndSave(string title, string content)
+        {
+            var report = _generator.GenerateReport(title, content);
+            var formatted = _formatter.Format(report);
+            _saver.Save(formatted);
+        }
+    }
+
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            Console.WriteLine("=== SOLID PRINCIPLES DEMO ===");
+
+            IReportGenerator generator = new ReportGenerator();
+            IReportSaver saver = new FileSaver();
+
+            // PDF Report
+            IReportFormatter pdfFormatter = new PDFFormatter();
+            var pdfService = new ReportService(generator, pdfFormatter, saver);
+            pdfService.CreateAndSave("Monthly Sales", "Sales report for July 2025");
+
+            Console.WriteLine();
+
+            // Excel Report (OCP: formatter extended without modifying service)
+            IReportFormatter excelFormatter = new ExcelFormatter();
+            var excelService = new ReportService(generator, excelFormatter, saver);
+            excelService.CreateAndSave("Monthly Expenses", "Expense report for July 2025");
+
+            Console.WriteLine();
+
+            // LSP example
+            IReport finReport = new FinancialReport("Balance Sheet", "Assets vs Liabilities", "INR");
+            Console.WriteLine($"Financial Report Currency: {((FinancialReport)finReport).Currency}");
+        }
+    }
+}
+
+
+
+/*=== SOLID PRINCIPLES DEMO ===
+Saving...
+[PDF FORMAT]
+Title: Monthly Sales
+Content: Sales report for July 2025
+
+Saving...
+[EXCEL FORMAT]
+Title: Monthly Expenses
+Content: Expense report for July 2025
+
+Financial Report Currency: INR*/
