@@ -1,0 +1,166 @@
+using System;
+using System.Collections.Generic;
+using System.Security.Cryptography;
+using System.Text;
+
+namespace SecureUserApp
+{
+    public class User
+    {
+        public string Username { get; set; }
+        public string HashedPassword { get; set; }
+        public string EncryptedDetails { get; set; }
+    }
+
+    public static class SecurityUtils
+    {
+        public static string HashPassword(string password)
+        {
+            using (SHA256 sha256 = SHA256.Create())
+            {
+                byte[] bytes = Encoding.UTF8.GetBytes(password);
+                byte[] hash = sha256.ComputeHash(bytes);
+                return BitConverter.ToString(hash).Replace("-", "").ToLower();
+            }
+        }
+
+        public static string Encrypt(string plainText, string key)
+        {
+            using (Aes aes = Aes.Create())
+            {
+                aes.Key = Encoding.UTF8.GetBytes(key.PadRight(32));
+                aes.IV = new byte[16];
+                var encryptor = aes.CreateEncryptor(aes.Key, aes.IV);
+                byte[] input = Encoding.UTF8.GetBytes(plainText);
+                byte[] encrypted = encryptor.TransformFinalBlock(input, 0, input.Length);
+                return Convert.ToBase64String(encrypted);
+            }
+        }
+
+        public static string Decrypt(string encryptedText, string key)
+        {
+            using (Aes aes = Aes.Create())
+            {
+                aes.Key = Encoding.UTF8.GetBytes(key.PadRight(32));
+                aes.IV = new byte[16];
+                var decryptor = aes.CreateDecryptor(aes.Key, aes.IV);
+                byte[] data = Convert.FromBase64String(encryptedText);
+                byte[] decrypted = decryptor.TransformFinalBlock(data, 0, data.Length);
+                return Encoding.UTF8.GetString(decrypted);
+            }
+        }
+    }
+
+    public class UserManager
+    {
+        private List<User> users = new List<User>();
+        private const string SecretKey = "securekey123";
+
+        public void Register(string username, string password, string sensitiveData)
+        {
+            string hashedPwd = SecurityUtils.HashPassword(password);
+            string encryptedData = SecurityUtils.Encrypt(sensitiveData, SecretKey);
+            users.Add(new User { Username = username, HashedPassword = hashedPwd, EncryptedDetails = encryptedData });
+            Console.WriteLine($"User '{username}' registered.");
+        }
+
+        public bool Login(string username, string password)
+        {
+            string hashedPwd = SecurityUtils.HashPassword(password);
+            foreach (var user in users)
+            {
+                if (user.Username == username && user.HashedPassword == hashedPwd)
+                {
+                    string decrypted = SecurityUtils.Decrypt(user.EncryptedDetails, SecretKey);
+                    Console.WriteLine($"User '{username}' logged in. Sensitive data: {decrypted}");
+                    return true;
+                }
+            }
+            Console.WriteLine($"Login failed for user '{username}'.");
+            return false;
+        }
+    }
+
+    class Program
+    {
+        static void Main()
+        {
+            UserManager userManager = new UserManager();
+            while (true)
+            {
+                Console.WriteLine("\n1. Register\n2. Login\n3. Exit");
+                Console.Write("Select option: ");
+                var choice = Console.ReadLine();
+                try
+                {
+                    if (choice == "1")
+                    {
+                        Console.Write("Enter username: ");
+                        string username = Console.ReadLine();
+                        Console.Write("Enter password: ");
+                        string password = Console.ReadLine();
+                        Console.Write("Enter sensitive info: ");
+                        string sensitive = Console.ReadLine();
+                        userManager.Register(username, password, sensitive);
+                        Console.WriteLine("Registration complete.");
+                    }
+                    else if (choice == "2")
+                    {
+                        Console.Write("Enter username: ");
+                        string username = Console.ReadLine();
+                        Console.Write("Enter password: ");
+                        string password = Console.ReadLine();
+                        bool isSuccess = userManager.Login(username, password);
+                        if (isSuccess)
+                            Console.WriteLine("Login successful!");
+                        else
+                            Console.WriteLine("Invalid credentials.");
+                    }
+                    else if (choice == "3")
+                    {
+                        Console.WriteLine("Exiting.");
+                        break;
+                    }
+                    else
+                    {
+                        Console.WriteLine("Invalid option.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Error: " + ex.Message);
+                }
+            }
+        }
+    }
+}
+
+/*
+Register Flow
+User Input:
+1
+testuser
+Test@123
+1234-5678-9012
+
+Expected Output:
+User registered successfully.
+
+Login Flow (Correct Password)
+User Input:
+2
+testuser
+Test@123
+
+Expected Output:
+Login successful!
+Decrypted user data: 1234 - 5678 - 9012
+Login Flow(Wrong Password)
+
+User Input:
+2
+testuser
+wrongpassword
+
+Expected Output:
+Invalid credentials.*/
