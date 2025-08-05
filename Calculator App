@@ -1,0 +1,154 @@
+// Required namespaces
+using System;
+using NUnit.Framework;
+
+namespace CalculatorApp
+{
+    // Calculator class with basic arithmetic operations
+    public class Calculator
+    {
+        // Adds two numbers and returns the sum
+        public double Add(double a, double b)
+        {
+            return a + b;
+        }
+
+        // Subtracts second number from the first and returns the result
+        public double Subtract(double a, double b)
+        {
+            return a - b;
+        }
+
+        // Multiplies two numbers and returns the product
+        public double Multiply(double a, double b)
+        {
+            return a * b;
+        }
+
+        // Divides the first number by the second
+        // Throws an exception if division by zero is attempted
+        public double Divide(double a, double b)
+        {
+            if (b == 0)
+                throw new DivideByZeroException("Cannot divide by zero.");
+            return a / b;
+        }
+    }
+
+    // Unit tests for Calculator class using NUnit
+    [TestFixture]
+    public class CalculatorTests
+    {
+        private Calculator calculator;
+
+        // Runs before every test method
+        [SetUp]
+        public void Setup()
+        {
+            calculator = new Calculator();
+        }
+
+        // Test for Add method
+        [Test]
+        public void TestAdd_TwoNumbers_ReturnsSum()
+        {
+            double result = calculator.Add(5, 3);
+            Assert.AreEqual(8, result);
+        }
+
+        // Test for Subtract method
+        [Test]
+        public void TestSubtract_TwoNumbers_ReturnsDifference()
+        {
+            double result = calculator.Subtract(10, 4);
+            Assert.AreEqual(6, result);
+        }
+
+        // Test for Multiply method
+        [Test]
+        public void TestMultiply_TwoNumbers_ReturnsProduct()
+        {
+            double result = calculator.Multiply(4, 2.5);
+            Assert.AreEqual(10, result);
+        }
+
+        // Test for Divide method with valid input
+        [Test]
+        public void TestDivide_TwoNumbers_ReturnsQuotient()
+        {
+            double result = calculator.Divide(10, 2);
+            Assert.AreEqual(5, result);
+        }
+
+        // Test that dividing by zero throws an exception
+        [Test]
+        public void TestDivide_ByZero_ThrowsException()
+        {
+            Assert.Throws<DivideByZeroException>(() => calculator.Divide(10, 0));
+        }
+
+        // Edge Test: Adding zero returns the same number
+        [Test]
+        public void TestAdd_WithZero_ReturnsSameNumber()
+        {
+            double result = calculator.Add(7, 0);
+            Assert.AreEqual(7, result);
+        }
+
+        // Edge Test: Subtract same numbers returns zero
+        [Test]
+        public void TestSubtract_SameNumbers_ReturnsZero()
+        {
+            double result = calculator.Subtract(9, 9);
+            Assert.AreEqual(0, result);
+        }
+
+        // Edge Test: Multiply by zero returns zero
+        [Test]
+        public void TestMultiply_ByZero_ReturnsZero()
+        {
+            double result = calculator.Multiply(100, 0);
+            Assert.AreEqual(0, result);
+        }
+    }
+}
+
+
+
+/*
+------------------------------
+Sample Inputs & Outputs
+------------------------------
+
+Test Case 1:
+Input: Add(5, 3)
+Output: 8
+
+Test Case 2:
+Input: Subtract(10, 4)
+Output: 6
+
+Test Case 3:
+Input: Multiply(4, 2.5)
+Output: 10
+
+Test Case 4:
+Input: Divide(10, 2)
+Output: 5
+
+Test Case 5:
+Input: Divide(10, 0)
+Output: Exception - "Cannot divide by zero."
+
+Edge Case 1:
+Input: Add(7, 0)
+Output: 7
+
+Edge Case 2:
+Input: Subtract(9, 9)
+Output: 0
+
+Edge Case 3:
+Input: Multiply(100, 0)
+Output: 0
+*/
