@@ -1,0 +1,152 @@
+using System;
+using System.Collections.Generic;
+using static System.Net.Mime.MediaTypeNames;
+
+namespace Assignment2_Patterns
+{
+    // ** Singleton Pattern **
+    public class Logger
+    {
+        private static readonly Logger _instance = new Logger();
+
+        // Private constructor prevents instantiation
+        private Logger() { }
+
+        public static Logger Instance => _instance;
+
+        public void Log(string message)
+        {
+            Console.WriteLine("[LOG] " + message);
+        }
+    }
+
+    // ** Factory Pattern **
+    public interface IDocument
+    {
+        string Name { get; }
+        void Print();
+    }
+
+    public class PDFDocument : IDocument
+    {
+        public string Name => "PDF Document";
+        public void Print() => Console.WriteLine("Printing: PDF Document");
+    }
+
+    public class WordDocument : IDocument
+    {
+        public string Name => "Word Document";
+        public void Print() => Console.WriteLine("Printing: Word Document");
+    }
+
+    public class DocumentFactory
+    {
+        public static IDocument CreateDocument(string type)
+        {
+            switch (type.ToLower())
+            {
+                case "pdf": return new PDFDocument();
+                case "word": return new WordDocument();
+                default: throw new ArgumentException("Unknown type");
+            }
+        }
+    }
+
+    // ** Observer Pattern **
+    public interface IWeatherObserver
+    {
+        void Update(float temperature);
+    }
+
+    public class WeatherDisplay : IWeatherObserver
+    {
+        private string _name;
+        public WeatherDisplay(string name)
+        {
+            _name = name;
+        }
+
+        public void Update(float temperature)
+        {
+            Console.WriteLine($"{_name} Display: Temperature updated: {temperature}°C");
+        }
+    }
+
+    public class WeatherStation
+    {
+        private List<IWeatherObserver> observers = new List<IWeatherObserver>();
+        private float _temperature;
+
+        public void Register(IWeatherObserver observer)
+        {
+            observers.Add(observer);
+        }
+
+        public void Unregister(IWeatherObserver observer)
+        {
+            observers.Remove(observer);
+        }
+
+        public void SetTemperature(float temp)
+        {
+            _temperature = temp;
+            NotifyObservers();
+        }
+
+        private void NotifyObservers()
+        {
+            foreach (var observer in observers)
+                observer.Update(_temperature);
+        }
+    }
+
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            Console.WriteLine("=== DESIGN PATTERNS DEMO ===\n");
+
+            // ** Singleton Logger Demo **
+            Console.WriteLine("Singleton Pattern:");
+            Logger.Instance.Log("Application Started");
+            Logger.Instance.Log("User logged in");
+
+            Console.WriteLine("\nFactory Pattern:");
+            var pdf = DocumentFactory.CreateDocument("pdf");
+            var word = DocumentFactory.CreateDocument("word");
+            pdf.Print();
+            word.Print();
+
+            Console.WriteLine("\nObserver Pattern:");
+            var station = new WeatherStation();
+            var display1 = new WeatherDisplay("Lobby");
+            var display2 = new WeatherDisplay("Server Room");
+
+            station.Register(display1);
+            station.Register(display2);
+
+            station.SetTemperature(28.5f);
+            station.Unregister(display1);
+            station.SetTemperature(29.0f);
+
+            Console.WriteLine("\n=== END OF DEMO ===");
+        }
+    }
+}
+
+/* --- DESIGN PATTERNS DEMO ---
+
+Singleton Pattern:
+[LOG] Application Started
+[LOG] User logged in
+
+Factory Pattern:
+Printing: PDF Document
+Printing: Word Document
+
+Observer Pattern:
+Lobby Display: Temperature updated: 28.5°C
+Server Room Display: Temperature updated: 28.5°C
+Server Room Display: Temperature updated: 29°C
+
+--- END OF DEMO --- */
