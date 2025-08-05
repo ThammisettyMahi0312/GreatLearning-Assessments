@@ -1,0 +1,276 @@
+using LibraryManagementSystem;
+using Microsoft.Win32;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace LibraryManagementSystem
+{
+    // Class representing a Book
+    public class Book
+    {
+        public string Title { get; }
+        public string Author { get; }
+        public string ISBN { get; }
+        public bool IsBorrowed { get; private set; }
+
+        public Book(string title, string author, string isbn)
+        {
+            Title = title;
+            Author = author;
+            ISBN = isbn;
+            IsBorrowed = false;
+        }
+
+        // Marks the book as borrowed
+        public void Borrow()
+        {
+            IsBorrowed = true;
+        }
+
+        // Marks the book as returned
+        public void Return()
+        {
+            IsBorrowed = false;
+        }
+    }
+
+    // Class representing a Borrower
+    public class Borrower
+    {
+        public string Name { get; }
+        public string LibraryCardNumber { get; }
+        public List<Book> BorrowedBooks { get; }
+
+        public Borrower(string name, string libraryCardNumber)
+        {
+            Name = name;
+            LibraryCardNumber = libraryCardNumber;
+            BorrowedBooks = new List<Book>();
+        }
+
+        // Method to borrow a book
+        public void BorrowBook(Book book)
+        {
+            BorrowedBooks.Add(book);
+            book.Borrow();
+        }
+
+        // Method to return a book
+        public void ReturnBook(Book book)
+        {
+            BorrowedBooks.Remove(book);
+            book.Return();
+        }
+    }
+
+    // Library class to manage books and borrowers
+    public class Library
+    {
+        public List<Book> Books { get; }
+        public List<Borrower> Borrowers { get; }
+
+        public Library()
+        {
+            Books = new List<Book>();
+            Borrowers = new List<Borrower>();
+        }
+
+        // Adds a book to the library
+        public void AddBook(Book book)
+        {
+            Books.Add(book);
+            Console.WriteLine("Book added successfully.\n");
+        }
+
+        // Registers a new borrower
+        public void RegisterBorrower(Borrower borrower)
+        {
+            Borrowers.Add(borrower);
+            Console.WriteLine("Borrower registered successfully.\n");
+        }
+
+        // Borrows a book
+        public void BorrowBook(string isbn, string libraryCardNumber)
+        {
+            var book = Books.FirstOrDefault(b => b.ISBN == isbn && !b.IsBorrowed);
+            var borrower = Borrowers.FirstOrDefault(b => b.LibraryCardNumber == libraryCardNumber);
+
+            if (book == null)
+            {
+                Console.WriteLine("Book not available or invalid ISBN.\n");
+                return;
+            }
+
+            if (borrower == null)
+            {
+                Console.WriteLine("Invalid borrower card number.\n");
+                return;
+            }
+
+            borrower.BorrowBook(book);
+            Console.WriteLine($"Book '{book.Title}' borrowed by {borrower.Name}.\n");
+        }
+
+        // Returns a book
+        public void ReturnBook(string isbn, string libraryCardNumber)
+        {
+            var borrower = Borrowers.FirstOrDefault(b => b.LibraryCardNumber == libraryCardNumber);
+            var book = borrower?.BorrowedBooks.FirstOrDefault(b => b.ISBN == isbn);
+
+            if (book == null || borrower == null)
+            {
+                Console.WriteLine("Borrow record not found.\n");
+                return;
+            }
+
+            borrower.ReturnBook(book);
+            Console.WriteLine($"Book '{book.Title}' returned successfully.\n");
+        }
+
+        // Displays all books
+        public void ViewBooks()
+        {
+            Console.WriteLine("Books in Library:");
+            foreach (var book in Books)
+            {
+                string status = book.IsBorrowed ? "Borrowed" : "Available";
+                Console.WriteLine($"- {book.Title} by {book.Author} | ISBN: {book.ISBN} | Status: {status}");
+            }
+            Console.WriteLine();
+        }
+
+        // Displays all borrowers
+        public void ViewBorrowers()
+        {
+            Console.WriteLine("Borrowers:");
+            foreach (var borrower in Borrowers)
+            {
+                Console.WriteLine($"- {borrower.Name} (Card: {borrower.LibraryCardNumber})");
+                if (borrower.BorrowedBooks.Count > 0)
+                {
+                    Console.WriteLine("  Borrowed Books:");
+                    foreach (var book in borrower.BorrowedBooks)
+                    {
+                        Console.WriteLine($"    - {book.Title} ({book.ISBN})");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("  No books borrowed.");
+                }
+            }
+            Console.WriteLine();
+        }
+    }
+
+    // Main program
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            Library library = new Library();
+
+            while (true)
+            {
+                Console.WriteLine("======= LIBRARY MENU =======");
+                Console.WriteLine("1. Add Book");
+                Console.WriteLine("2. Register Borrower");
+                Console.WriteLine("3. Borrow Book");
+                Console.WriteLine("4. Return Book");
+                Console.WriteLine("5. View All Books");
+                Console.WriteLine("6. View All Borrowers");
+                Console.WriteLine("7. Exit");
+                Console.Write("Choose an option: ");
+                string choice = Console.ReadLine();
+                Console.WriteLine();
+
+                switch (choice)
+                {
+                    case "1":
+                        Console.Write("Enter Title: ");
+                        string title = Console.ReadLine();
+                        Console.Write("Enter Author: ");
+                        string author = Console.ReadLine();
+                        Console.Write("Enter ISBN: ");
+                        string isbn = Console.ReadLine();
+                        library.AddBook(new Book(title, author, isbn));
+                        break;
+
+                    case "2":
+                        Console.Write("Enter Borrower Name: ");
+                        string name = Console.ReadLine();
+                        Console.Write("Enter Library Card Number: ");
+                        string card = Console.ReadLine();
+                        library.RegisterBorrower(new Borrower(name, card));
+                        break;
+
+                    case "3":
+                        Console.Write("Enter ISBN of Book to Borrow: ");
+                        string isbnToBorrow = Console.ReadLine();
+                        Console.Write("Enter Library Card Number: ");
+                        string cardToBorrow = Console.ReadLine();
+                        library.BorrowBook(isbnToBorrow, cardToBorrow);
+                        break;
+
+                    case "4":
+                        Console.Write("Enter ISBN of Book to Return: ");
+                        string isbnToReturn = Console.ReadLine();
+                        Console.Write("Enter Library Card Number: ");
+                        string cardToReturn = Console.ReadLine();
+                        library.ReturnBook(isbnToReturn, cardToReturn);
+                        break;
+
+                    case "5":
+                        library.ViewBooks();
+                        break;
+
+                    case "6":
+                        library.ViewBorrowers();
+                        break;
+
+                    case "7":
+                        Console.WriteLine("Exiting library system. Goodbye!");
+                        return;
+
+                    default:
+                        Console.WriteLine("Invalid option. Please try again.\n");
+                        break;
+                }
+            }
+        }
+    }
+}
+
+/*Sample Input/Output:
+Option 1: Add Book
+
+text
+Enter Title: Clean Code
+Enter Author: Robert C. Martin
+Enter ISBN: 9780132350884
+Book added successfully.
+Option 2: Register Borrower
+
+text
+Enter Borrower Name: John Doe
+Enter Library Card Number: JD001
+Borrower registered successfully.
+Option 3: Borrow Book
+
+text
+Enter ISBN of Book to Borrow: 9780132350884
+Enter Library Card Number: JD001
+Book 'Clean Code' borrowed by John Doe.
+Option 4: Return Book
+
+text
+Enter ISBN of Book to Return: 9780132350884
+Enter Library Card Number: JD001
+Book 'Clean Code' returned successfully.
+Option 5: View Books
+
+text
+Books in Library:
+-Clean Code by Robert C. Martin | ISBN: 9780132350884 | Status: Available
+*/
